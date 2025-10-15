@@ -1,0 +1,48 @@
+# version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    networks:
+      - mynetwork
+
+
+  backend:
+    build: 
+      context: .
+      dockerfile: src/backend/Dockerfile
+    volumes:
+      - ./src/backend:/app
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres/mydatabase
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - mynetwork
+  frontend:
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile # Caminho para o Dockerfile do frontend
+    container_name: streamlit-mercado-livre
+    ports:
+      - "8501:8501" # Mapeia a porta 8501 do contêiner para a 8501 da sua máquina
+    volumes:
+      - ./src/frontend:/app # Espelha o código do frontend para dentro do contêiner
+    depends_on:
+      - backend # Garante que o backend suba antes do frontend
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  postgres_data:
